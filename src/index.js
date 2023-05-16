@@ -16,26 +16,28 @@ let request = '';
 formEl.addEventListener('submit', onSearchClick);
 addBtnEl.addEventListener('click', onAddImage);
 
-function onAddImage() {
-  page += 1;
-  // console.log(page);
-
-  onRequestSerchFetch(request, page, perPage)
-    .then(({ data }) => {
-      let hasImage = Math.ceil(data.totalHits / perPage);
-      if (page > hasImage) {
-        addBtnEl.classList.add('visually-hidden');
-        infoEnd.classList.remove('visually-hidden');
-        return Notify.info(
-          `We're sorry, but you've reached the end of search results.`
-        );
-      }
+async function handleSearchRequest(request, page, perPage) {
+  try {
+    const { data } = await onRequestSerchFetch(request, page, perPage);
+    let hasImage = Math.ceil(data.totalHits / perPage);
+    if (page > hasImage) {
+      addBtnEl.classList.add('visually-hidden');
+      infoEnd.classList.remove('visually-hidden');
+      Notify.info(`We're sorry, but you've reached the end of search results.`);
+    } else {
       galleryEl.insertAdjacentHTML('beforeend', onRenderResponse(data.hits));
-      // this
       lightbox.refresh();
-    })
-    .catch(e => console.log(e));
+    }
+  } catch (e) {
+    console.log(e);
+  }
 }
+
+handleSearchRequest(request, page, perPage);
+
+
+
+
 
 function onSearchClick(e) {
   galleryEl.innerHTML = '';
@@ -48,18 +50,17 @@ function onSearchClick(e) {
   addBtnEl.classList.add('visually-hidden');
   infoEnd.classList.add('visually-hidden');
 
-  onRequestSerchFetch(request, page, perPage)
-    .then(({ data }) => {
+  async function handleSearchRequest(request, page, perPage) {
+    try {
+      const { data } = await onRequestSerchFetch(request, page, perPage);
       if (data.totalHits > 0) {
         galleryEl.innerHTML = onRenderResponse(data.hits);
-        // this
         lightbox.refresh();
         Notify.success(`Hooray! We found ${data.totalHits} images.`);
-        // scrool
         window.scrollBy({
           behavior: 'smooth',
         });
-
+  
         if (data.totalHits > perPage) {
           addBtnEl.classList.remove('visually-hidden');
         } else {
@@ -70,9 +71,13 @@ function onSearchClick(e) {
           'Sorry, there are no images matching your search query. Please try again.'
         );
       }
-    })
-    .catch(e => console.log(e));
-}
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  
+  // Wywołanie funkcji:
+  handleSearchRequest(request, page, perPage);
 
 function onRenderResponse(values) {
   return values
